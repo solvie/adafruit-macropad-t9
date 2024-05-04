@@ -1,7 +1,13 @@
-# adafruit-macropad-t9
+# Adafruit Macropad Keyboard
 
-Adapting [Adafruit's Macropad code from their Learning System Guides](https://github.com/adafruit/Adafruit_Learning_System_Guides/) to add a T9 mode (non-predictive)
+Adapting [Adafruit's Macropad code from their Learning System Guides](https://github.com/adafruit/Adafruit_Learning_System_Guides/) to add full keyboard functionality
 
+Uses rotary encoder to switch between:
+- cursor controls
+- 3x4 keypad
+- numpad
+- special characters
+  
 ## Required libraries
 - `adafruit_debouncer.mpy`
 - `adafruit_display_text`
