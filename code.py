@@ -20,6 +20,8 @@ from adafruit_display_text import label
 from adafruit_macropad import MacroPad
 from adafruit_hid.keycode import Keycode
 from app import App
+from stateless_app import StatelessApp
+from stateful_app import StatefulApp
 
 # CONFIGURABLES ------------------------
 
@@ -30,9 +32,6 @@ MACRO_FOLDER = '/macros'
 macropad = MacroPad()
 macropad.display.auto_refresh = False
 macropad.pixels.auto_write = False
-last_letter_key = None
-last_letter_index = -1
-
 
 # Set up displayio group with all the labels
 group = displayio.Group()
@@ -51,6 +50,12 @@ group.append(label.Label(terminalio.FONT, text='', color=0x000000,
                          anchor_point=(0.5, 0.0)))
 macropad.display.root_group = group
 
+def createApp(appInitializer, macropad, rect):
+    if appInitializer['type'] == 'stateless':
+        return StatelessApp(appInitializer, macropad, rect) 
+    elif appInitializer['type'] == 'stateful':
+        return StatefulApp(appInitializer, macropad, rect)
+
 # Load all the macro key setups from .py files in MACRO_FOLDER
 apps = []
 files = os.listdir(MACRO_FOLDER)
@@ -59,7 +64,7 @@ for filename in files:
     if filename.endswith('.py') and not filename.startswith('._'):
         try:
             module = __import__(MACRO_FOLDER + '/' + filename[:-3])
-            apps.append(App(module.app, macropad, rect))
+            apps.append(createApp(module.app, macropad, rect))
         except (SyntaxError, ImportError, AttributeError, KeyError, NameError,
                 IndexError, TypeError) as err:
             print("ERROR in", filename)
@@ -72,7 +77,7 @@ app_index = 0
 apps[app_index].switch()
 
 
-# MAIN LOOP ----------------------------
+# MAIN LOOP ----------------------------adadhadk#%$@^
 
 while True:
     # Read encoder position. If it's changed, switch apps.
@@ -82,8 +87,6 @@ while True:
         app_index = position % len(apps)
         apps[app_index].switch()
         last_position = position
-        last_letter_key = None
-        last_letter_index = -1
 
     # Handle encoder button. If state has changed, and if there's a
     # corresponding macro, set up variables to act on this just like
@@ -106,94 +109,9 @@ while True:
     # If code reaches here, a key or the encoder button WAS pressed/released
     # and there IS a corresponding macro available for it...other situations
     # are avoided by 'continue' statements above which resume the loop.
-
-    sequence = apps[app_index].macros[key_number][2]
-
-    keypad_dict = apps[app_index].dict
+    current_app = apps[app_index]
 
     if pressed:
-        # 'sequence' is an arbitrary-length list, each item is one of:
-        # Positive integer (e.g. Keycode.KEYPAD_MINUS): key pressed
-        # Negative integer: (absolute value) key released
-        # Float (e.g. 0.25): delay in seconds
-        # String (e.g. "Foo"): corresponding keys pressed & released
-        # List []: one or more Consumer Control codes (can also do float delay)
-        # Dict {}: mouse buttons/motion (might extend in future)
-        if key_number < 12: # No pixel for encoder button
-            macropad.pixels[key_number] = 0xFFFFFF
-            macropad.pixels.show()
-        for item in sequence:
-            if isinstance(item, int):
-                if item >= 0:
-                    macropad.keyboard.press(item)
-                    if apps[app_index].name == 'Keypad':
-                        last_letter_key = None
-                        last_letter_index = -1
-                else:
-                    macropad.keyboard.release(-item)
-            elif isinstance(item, float):
-                time.sleep(item)
-            elif isinstance(item, str):
-                if apps[app_index].name == 'Keypad':
-                    if item == '*':
-                        last_letter_key = None
-                        last_letter_index = -1
-                    elif last_letter_key == None:
-                        last_letter_key = item
-                        last_letter_index = 0
-                        macropad.keyboard_layout.write(keypad_dict[item][last_letter_index])
-                    else:
-                        if item == last_letter_key:
-                            last_letter_index = (last_letter_index + 1) % len(keypad_dict[item])
-                            macropad.keyboard.press(Keycode.BACKSPACE)
-                            macropad.keyboard_layout.write(keypad_dict[item][last_letter_index])
-                        else:
-                            last_letter_key = item
-                            last_letter_index = 0
-                            macropad.keyboard_layout.write(keypad_dict[item][last_letter_index])
-                else:
-                    macropad.keyboard_layout.write(item)
-            elif isinstance(item, list):
-                for code in item:
-                    if isinstance(code, int):
-                        macropad.consumer_control.release()
-                        macropad.consumer_control.press(code)
-                    if isinstance(code, float):
-                        time.sleep(code)
-            elif isinstance(item, dict):
-                if 'buttons' in item:
-                    if item['buttons'] >= 0:
-                        macropad.mouse.press(item['buttons'])
-                    else:
-                        macropad.mouse.release(-item['buttons'])
-                macropad.mouse.move(item['x'] if 'x' in item else 0,
-                                    item['y'] if 'y' in item else 0,
-                                    item['wheel'] if 'wheel' in item else 0)
-                if 'tone' in item:
-                    if item['tone'] > 0:
-                        macropad.stop_tone()
-                        macropad.start_tone(item['tone'])
-                    else:
-                        macropad.stop_tone()
-                elif 'play' in item:
-                    macropad.play_file(item['play'])
+        current_app.handleKeypress(key_number)
     else:
-        # Release any still-pressed keys, consumer codes, mouse buttons
-        # Keys and mouse buttons are individually released this way (rather
-        # than release_all()) because pad supports multi-key rollover, e.g.
-        # could have a meta key or right-mouse held down by one macro and
-        # press/release keys/buttons with others. Navigate popups, etc.
-        for item in sequence:
-            if isinstance(item, int):
-                if item >= 0:
-                    macropad.keyboard.release(item)
-            elif isinstance(item, dict):
-                if 'buttons' in item:
-                    if item['buttons'] >= 0:
-                        macropad.mouse.release(item['buttons'])
-                elif 'tone' in item:
-                    macropad.stop_tone()
-        macropad.consumer_control.release()
-        if key_number < 12: # No pixel for encoder button
-            macropad.pixels[key_number] = apps[app_index].macros[key_number][0]
-            macropad.pixels.show()
+        current_app.release(key_number)

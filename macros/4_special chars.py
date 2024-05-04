@@ -24,7 +24,8 @@ app = {                # REQUIRED dict, must be named 'app'
         # Encoder button ---
         (0x000000, '', [Keycode.BACKSPACE])
     ],
-    'dict' : {
+    'type' : 'stateful',
+    'dict' : { # TODO add more special characters
         '1' : ['!'],
         '2' : ['@'],
         '3' : ['#'],

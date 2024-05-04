@@ -30,5 +30,5 @@ app = {                # REQUIRED dict, must be named 'app'
         # Encoder button ---
         (0x000000, '', [Keycode.BACKSPACE])
     ],
-    'dict' : {} # empty for now
+    'type' : 'stateless',
 }

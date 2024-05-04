@@ -1,11 +1,8 @@
 class App:
-    """ Class representing a host-side application, for which we have a set
-        of macro sequences. Project code was originally more complex and
-        this was helpful, but maybe it's excessive now?"""
+    """ Class representing a host-side application """
     def __init__(self, appdata, macropad, rect):
         self.name = appdata['name']
         self.macros = appdata['macros']
-        self.dict = appdata['dict']
         self.macropad = macropad
         self.rect = rect
 
@@ -32,5 +29,18 @@ class App:
         self.macropad.pixels.show()
         self.macropad.display.refresh()
 
-    def doSomething(self):
-        print('something')
+    def release(self, key_number):
+        # Release any still-pressed keys, consumer codes, mouse buttons
+        # Keys and mouse buttons are individually released this way (rather
+        # than release_all()) because pad supports multi-key rollover, e.g.
+        # could have a meta key or right-mouse held down by one macro and
+        # press/release keys/buttons with others. Navigate popups, etc.
+        sequence = self.macros[key_number][2]
+        for item in sequence:
+            if isinstance(item, int):
+                if item >= 0:
+                    self.macropad.keyboard.release(item)
+        self.macropad.consumer_control.release()
+        if key_number < 12: # No pixel for encoder button
+            self.macropad.pixels[key_number] = self.macros[key_number][0]
+            self.macropad.pixels.show()
