@@ -19,46 +19,11 @@ from adafruit_display_shapes.rect import Rect
 from adafruit_display_text import label
 from adafruit_macropad import MacroPad
 from adafruit_hid.keycode import Keycode
-
+from app import App
 
 # CONFIGURABLES ------------------------
 
 MACRO_FOLDER = '/macros'
-
-
-# CLASSES AND FUNCTIONS ----------------
-
-class App:
-    """ Class representing a host-side application, for which we have a set
-        of macro sequences. Project code was originally more complex and
-        this was helpful, but maybe it's excessive now?"""
-    def __init__(self, appdata):
-        self.name = appdata['name']
-        self.macros = appdata['macros']
-        self.dict = appdata['dict']
-
-    def switch(self):
-        """ Activate application settings; update OLED labels and LED
-            colors. """
-        group[13].text = self.name   # Application name
-        if self.name:
-            rect.fill = 0xFFFFFF
-        else: # empty app name indicates blank screen for which we dimm header
-            rect.fill = 0x000000
-        for i in range(12):
-            if i < len(self.macros): # Key in use, set label + LED color
-                macropad.pixels[i] = self.macros[i][0]
-                group[i].text = self.macros[i][1]
-            else:  # Key not in use, no label or LED
-                macropad.pixels[i] = 0
-                group[i].text = ''
-        macropad.keyboard.release_all()
-        macropad.consumer_control.release()
-        macropad.mouse.release_all()
-        macropad.stop_tone()
-        macropad.pixels.show()
-        macropad.display.refresh()
-
 
 # INITIALIZATION -----------------------
 
@@ -94,18 +59,12 @@ for filename in files:
     if filename.endswith('.py') and not filename.startswith('._'):
         try:
             module = __import__(MACRO_FOLDER + '/' + filename[:-3])
-            apps.append(App(module.app))
+            apps.append(App(module.app, macropad, rect))
         except (SyntaxError, ImportError, AttributeError, KeyError, NameError,
                 IndexError, TypeError) as err:
             print("ERROR in", filename)
             import traceback
             traceback.print_exception(err, err, err.__traceback__)
-
-if not apps:
-    group[13].text = 'NO MACRO FILES FOUND'
-    macropad.display.refresh()
-    while True:
-        pass
 
 last_position = None
 last_encoder_switch = macropad.encoder_switch_debounced.pressed
