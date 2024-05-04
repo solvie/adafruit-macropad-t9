@@ -5,28 +5,30 @@
 # MACROPAD Hotkeys example: Universal Numpad
 
 from adafruit_hid.keycode import Keycode # REQUIRED if using Keycode.* values
+import colors
 
 app = {                # REQUIRED dict, must be named 'app'
     'name' : 'Numpad', # Application name
     'macros' : [       # List of button macros...
         # COLOR    LABEL    KEY SEQUENCE
         # 1st row ----------
-        (0x202000, '1', ['1']),
-        (0x202000, '2', ['2']),
-        (0x202000, '3', ['3']),
+        (colors.YELLOW, '1', ['1']),
+        (colors.YELLOW, '2', ['2']),
+        (colors.YELLOW, '3', ['3']),
         # 2nd row ----------
-        (0x202000, '4', ['4']),
-        (0x202000, '5', ['5']),
-        (0x202000, '6', ['6']),
+        (colors.YELLOW, '4', ['4']),
+        (colors.YELLOW, '5', ['5']),
+        (colors.YELLOW, '6', ['6']),
         # 3rd row ----------
-        (0x202000, '7', ['7']),
-        (0x202000, '8', ['8']),
-        (0x202000, '9', ['9']),
+        (colors.YELLOW, '7', ['7']),
+        (colors.YELLOW, '8', ['8']),
+        (colors.YELLOW, '9', ['9']),
         # 4th row ----------
-        (0x101010, '*', ['*']),
-        (0x800000, '0', ['0']),
-        (0x101010, '#', ['#']),
+        (colors.BLUE, '*', ['*']),
+        (colors.YELLOW, '0', ['0']),
+        (colors.RED, '#', ['#']),
         # Encoder button ---
         (0x000000, '', [Keycode.BACKSPACE])
-    ]
+    ],
+    'dict' : {} # empty for now
 }

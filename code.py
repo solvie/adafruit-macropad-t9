@@ -35,6 +35,7 @@ class App:
     def __init__(self, appdata):
         self.name = appdata['name']
         self.macros = appdata['macros']
+        self.dict = appdata['dict']
 
     def switch(self):
         """ Activate application settings; update OLED labels and LED
@@ -106,21 +107,6 @@ if not apps:
     while True:
         pass
 
-keypad_dict = {
-    '1' : ['1'],
-    '2' : ['a', 'b', 'c'],
-    '3' : ['d', 'e', 'f'],
-    '4' : ['g', 'h', 'i'],
-    '5' : ['j', 'k', 'l'],
-    '6' : ['m', 'n', 'o'],
-    '7' : ['p', 'q', 'r', 's'],
-    '8' : ['t', 'u', 'v'],
-    '9' : ['w', 'x', 'y', 'z'],
-    '*' : ['*'],
-    '0' : [Keycode.SPACE],
-    '#' : ['.', ',', '?', '!']
-}
-
 last_position = None
 last_encoder_switch = macropad.encoder_switch_debounced.pressed
 app_index = 0
@@ -163,6 +149,9 @@ while True:
     # are avoided by 'continue' statements above which resume the loop.
 
     sequence = apps[app_index].macros[key_number][2]
+
+    keypad_dict = apps[app_index].dict
+
     if pressed:
         # 'sequence' is an arbitrary-length list, each item is one of:
         # Positive integer (e.g. Keycode.KEYPAD_MINUS): key pressed
@@ -174,7 +163,7 @@ while True:
         if key_number < 12: # No pixel for encoder button
             macropad.pixels[key_number] = 0xFFFFFF
             macropad.pixels.show()
-        for item in sequence:          
+        for item in sequence:
             if isinstance(item, int):
                 if item >= 0:
                     macropad.keyboard.press(item)
